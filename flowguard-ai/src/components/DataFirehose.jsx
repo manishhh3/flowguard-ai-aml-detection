@@ -31,32 +31,34 @@ const statusConfig = {
 };
 
 export default function DataFirehose({ transactions }) {
+  const visibleTransactions = transactions.slice(0, 6);
+
   const riskIndicator = transactions.some(t => t.status === 'FLAGGED') ? 'HIGH' : 
                        transactions.some(t => t.status === 'ANALYZING') ? 'MEDIUM' : 'LOW';
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-900/50 via-slate-900/30 to-slate-950/40 rounded-xl border border-slate-700/50 overflow-hidden">
+    <div className="h-full flex flex-col bg-slate-900/25 rounded-xl border border-slate-700/35 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/30 bg-gradient-to-r from-slate-800/30 to-transparent">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/25 bg-slate-800/15">
         <div className="flex items-center gap-3">
           <motion.div
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <Activity className="w-5 h-5 text-neon-cyan glow-cyan" />
+            <Activity className="w-4 h-4 text-neon-cyan" />
           </motion.div>
           <div>
-            <h3 className="text-neon-cyan font-bold text-sm tracking-widest uppercase">
+            <h3 className="text-neon-cyan font-bold text-xs tracking-wide uppercase">
               Data Firehose
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">Real-time Transaction Stream</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">Real-time Transaction Stream</p>
           </div>
         </div>
 
         <motion.div 
           animate={{ opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50"
+          className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-800/40 border border-slate-700/35"
         >
           <div className={`w-2 h-2 rounded-full ${
             riskIndicator === 'HIGH' ? 'bg-threat-critical' :
@@ -67,7 +69,7 @@ export default function DataFirehose({ transactions }) {
       </div>
 
       {/* Column Headers */}
-      <div className="grid grid-cols-4 gap-4 px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-700/20 bg-slate-800/10">
+      <div className="grid grid-cols-4 gap-3 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-500 border-b border-slate-700/20 bg-slate-800/10">
         <span>Time</span>
         <span>TXN ID</span>
         <span className="text-right">Amount</span>
@@ -77,12 +79,12 @@ export default function DataFirehose({ transactions }) {
       {/* Transaction List */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
         {/* Gradient scan effect */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-15">
           <div className="w-full h-12 bg-gradient-to-b from-neon-cyan/10 via-transparent to-transparent animate-scan-line" />
         </div>
 
         <AnimatePresence mode="popLayout">
-          {transactions.length === 0 ? (
+          {visibleTransactions.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -91,7 +93,7 @@ export default function DataFirehose({ transactions }) {
               <p className="text-slate-500 text-sm">Waiting for transactions...</p>
             </motion.div>
           ) : (
-            transactions.map((txn, index) => {
+            visibleTransactions.map((txn, index) => {
               const config = statusConfig[txn.status];
               const StatusIcon = config.icon;
 
@@ -106,7 +108,7 @@ export default function DataFirehose({ transactions }) {
                     stiffness: 400,
                     damping: 25,
                   }}
-                  className={`grid grid-cols-4 gap-4 px-6 py-3.5 text-sm border-b border-slate-800/50
+                  className={`grid grid-cols-4 gap-3 px-4 py-2.5 text-sm border-b border-slate-800/35
                     transition-all duration-300
                     ${config.bg} ${config.border}
                     ${txn.status === 'FLAGGED' ? 'animate-threat-flash' : ''}
@@ -137,7 +139,7 @@ export default function DataFirehose({ transactions }) {
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: 0.1 }}
-                      className={`${config.badge} inline-flex items-center justify-center gap-1.5`}
+                      className={`${config.badge} inline-flex items-center justify-center gap-1 px-2 py-0.5`}
                     >
                       <StatusIcon className={`w-3 h-3 ${config.animate ? 'animate-spin' : ''}`} />
                       <span className="text-xs font-bold">{txn.status}</span>
@@ -151,11 +153,11 @@ export default function DataFirehose({ transactions }) {
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-3 border-t border-slate-700/30 bg-slate-800/10 flex items-center justify-between text-xs text-slate-500">
+      <div className="px-4 py-2 border-t border-slate-700/25 bg-slate-800/10 flex items-center justify-between text-[10px] text-slate-500">
         <div className="flex gap-3">
-          <span>Total: {transactions.length} txns</span>
+          <span>Showing: {visibleTransactions.length} txns</span>
           <span>|</span>
-          <span>Suspicious: {transactions.filter(t => t.status === 'FLAGGED').length}</span>
+          <span>Suspicious: {visibleTransactions.filter(t => t.status === 'FLAGGED').length}</span>
         </div>
         <motion.span
           animate={{ opacity: [0.5, 1, 0.5] }}
@@ -163,31 +165,6 @@ export default function DataFirehose({ transactions }) {
         >
           Live stream active
         </motion.span>
-      </div>
-    </div>
-  );
-}
-          })}
-        </AnimatePresence>
-
-        {transactions.length === 0 && (
-          <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
-            <Loader className="w-4 h-4 mr-2 animate-spin" />
-            Initializing data stream...
-          </div>
-        )}
-      </div>
-
-      {/* Footer Stats */}
-      <div className="px-4 py-2 border-t border-slate-700/50 bg-slate-800/20 flex justify-between text-xs">
-        <span className="text-slate-500">
-          Total: <span className="text-neon-cyan">{transactions.length}</span>
-        </span>
-        <span className="text-slate-500">
-          Flagged: <span className="text-crimson-alert">
-            {transactions.filter(t => t.status === 'FLAGGED').length}
-          </span>
-        </span>
       </div>
     </div>
   );

@@ -1,9 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { Shield, Play, Pause, Radio, Wifi } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Shield, Play, Pause, Wifi, Settings, CheckCircle2, Upload, Download, BarChart3, AlertCircle, TrendingUp, FileText, Filter, Eye, EyeOff, Zap, Grid3x3, Activity, Brain } from 'lucide-react';
 import DataFirehose from './components/DataFirehose';
 import ThreatMatrix from './components/ThreatMatrix';
 import ExecutionLog from './components/ExecutionLog';
+import UploadPanel from './components/UploadPanel';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
+import ComplianceReporting from './components/ComplianceReporting';
+import AdvancedMetrics from './components/AdvancedMetrics';
+import NetworkGraph from './components/NetworkGraph';
+import SystemHealth from './components/SystemHealth';
+import MLModelsMonitor from './components/MLModelsMonitor';
+import RulesEngine from './components/RulesEngine';
+import RealTimeAlerts from './components/RealTimeAlerts';
+import CaseManagement from './components/CaseManagement';
+import RegressionAnalysis from './components/RegressionAnalysis';
 import './index.css';
 
 // Transaction generator utilities
@@ -20,44 +31,78 @@ const generateNormalTransaction = () => ({
   id: Date.now() + Math.random(),
   time: generateTime(),
   txnId: generateTxnId(),
-  amount: Math.floor(Math.random() * 80000) + 5000, // 5K - 85K
-  status: 'CLEARED'
+  amount: Math.floor(Math.random() * 80000) + 5000,
+  status: 'CLEARED',
+  source: `ACC-${Math.floor(Math.random() * 9000) + 1000}`,
+  destination: `ACC-${Math.floor(Math.random() * 9000) + 1000}`,
+  currency: 'INR'
 });
 
 const generateSuspiciousTransaction = (index) => {
-  // Amounts just below 2L threshold (1.85L - 1.99L for structuring pattern)
   const amounts = [185000, 190000, 195000, 188000, 192000];
   return {
     id: Date.now() + Math.random(),
     time: generateTime(),
     txnId: generateTxnId(),
     amount: amounts[index % amounts.length],
-    status: 'ANALYZING'
+    status: 'ANALYZING',
+    source: `ACC-${Math.floor(Math.random() * 9000) + 1000}`,
+    destination: `ACC-${Math.floor(Math.random() * 9000) + 1000}`,
+    currency: 'INR'
   };
 };
 
 // Agent log script
 const agentScript = [
-  { type: 'system', message: 'Agent AML-7 online.' },
-  { type: 'agent', message: 'Monitoring SWIFT gateway...' },
-  { type: 'agent', message: 'Baseline pattern analysis initialized.' },
-  { type: 'processing', message: 'Anomaly detected on Acct #4492.' },
-  { type: 'agent', message: 'Cross-referencing historical ledgers...' },
-  { type: 'alert', message: 'Structuring pattern identified. 5 transactions just below INR 2L threshold.' },
-  { type: 'action', message: 'Executing freeze protocol. Generating SAR.' }
+  { type: 'system', message: 'Agent AML-7 initialized and ready.' },
+  { type: 'agent', message: 'Connecting to SWIFT gateway...' },
+  { type: 'processing', message: 'Loading baseline patterns...' },
+  { type: 'agent', message: 'System calibration: 12-factor risk model activated.' },
+  { type: 'agent', message: 'Real-time transaction stream initialized.' },
+  { type: 'processing', message: 'Monitoring for suspicious patterns...' },
+  { type: 'agent', message: 'Isolation Forest model loaded.' },
+  { type: 'agent', message: 'Statistical anomaly detection: ACTIVE' }
 ];
 
 export default function App() {
   const [isLive, setIsLive] = useState(true);
-  const [transactions, setTransactions] = useState([]);
-  const [logs, setLogs] = useState([]);
-  const [riskScore, setRiskScore] = useState(15);
+  const [transactions, setTransactions] = useState(() => {
+    // Initialize with demo data
+    return Array.from({ length: 15 }, () => generateNormalTransaction());
+  });
+  
+  const [logs, setLogs] = useState(() => agentScript.slice(0, 3));
+  const [riskScore, setRiskScore] = useState(25);
   const [suspiciousCount, setSuspiciousCount] = useState(0);
   const [showAlert, setShowAlert] = useState(false);
-  const [threatNodes, setThreatNodes] = useState([]);
+  const [threatNodes, setThreatNodes] = useState(() => 
+    Array.from({ length: 10 }, (_, i) => ({ id: i, suspicious: i % 3 === 0 }))
+  );
+  const [showSettings, setShowSettings] = useState(false);
+  const [simulationSpeed, setSimulationSpeed] = useState(1);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [filterRisk, setFilterRisk] = useState('all');
+  const [stats, setStats] = useState({
+    totalProcessed: 1247,
+    flagged: 24,
+    cleared: 1223,
+    accuracy: 94.8,
+    avgProcessTime: '2.3ms',
+    falsePositives: 2,
+    detectionRate: 96.5,
+    pep: 3,
+    sanctions: 1,
+    compliance: 'FULLY_COMPLIANT',
+    riskDistribution: {
+      critical: 4,
+      high: 8,
+      medium: 12,
+      low: 1200
+    }
+  });
 
   const tickRef = useRef(0);
-  const scriptIndexRef = useRef(0);
+  const scriptIndexRef = useRef(agentScript.length - 1);
   const suspiciousCountRef = useRef(0);
 
   const addLog = useCallback((logEntry) => {
@@ -66,98 +111,108 @@ export default function App() {
       id: Date.now() + Math.random(),
       timestamp: generateTime()
     };
-    setLogs(prev => [...prev, fullLog]);
+    setLogs(prev => [...prev.slice(-20), fullLog]);
   }, []);
 
   const processTransaction = useCallback(() => {
+    if (!isLive) return;
+
     tickRef.current += 1;
     const tick = tickRef.current;
 
-    // Decide if this should be a suspicious transaction
-    // Start suspicious transactions after tick 5, one every 3 ticks
-    const shouldBeSuspicious = tick > 5 && (tick - 6) % 3 === 0 && suspiciousCountRef.current < 5;
+    const shouldBeSuspicious = tick > 5 && (tick - 6) % (4 - Math.floor(simulationSpeed)) === 0 && suspiciousCountRef.current < 10;
 
     if (shouldBeSuspicious) {
-      // Generate suspicious transaction
       const txn = generateSuspiciousTransaction(suspiciousCountRef.current);
       setTransactions(prev => [txn, ...prev].slice(0, 50));
+      setThreatNodes(prev => [...prev, { id: Date.now(), suspicious: true }].slice(-20));
 
-      // Update threat nodes
-      setThreatNodes(prev => [...prev, { id: Date.now(), suspicious: true }]);
-
-      // Increase risk score
-      const newRisk = Math.min(95, riskScore + 15);
+      const newRisk = Math.min(95, riskScore + 12);
       setRiskScore(newRisk);
 
-      // After a delay, update to FLAGGED
       setTimeout(() => {
         setTransactions(prev =>
           prev.map(t => t.id === txn.id ? { ...t, status: 'FLAGGED' } : t)
         );
         suspiciousCountRef.current += 1;
         setSuspiciousCount(suspiciousCountRef.current);
+        setStats(prev => ({
+          ...prev,
+          flagged: prev.flagged + 1,
+          totalProcessed: prev.totalProcessed + 1
+        }));
 
-        // Trigger agent script based on suspicious count
-        const scriptMessages = {
-          1: 3, // "Anomaly detected..." at 1st suspicious
-          2: 4, // "Cross-referencing..." at 2nd suspicious
-          3: 4, // Same
-          4: 5, // "Structuring pattern..." at 4th suspicious
-          5: 6  // "Executing freeze..." at 5th suspicious
-        };
-
-        if (scriptMessages[suspiciousCountRef.current] !== undefined) {
-          const idx = scriptMessages[suspiciousCountRef.current];
-          if (idx < agentScript.length && scriptIndexRef.current <= idx) {
-            for (let i = scriptIndexRef.current; i <= idx; i++) {
-              setTimeout(() => addLog(agentScript[i]), (i - scriptIndexRef.current) * 800);
-            }
-            scriptIndexRef.current = idx + 1;
-          }
+        if (scriptIndexRef.current < agentScript.length - 1) {
+          addLog(agentScript[scriptIndexRef.current + 1]);
+          scriptIndexRef.current += 1;
         }
 
-        // Show alert when 4th suspicious transaction is flagged
-        if (suspiciousCountRef.current >= 4 && !showAlert) {
+        if (suspiciousCountRef.current >= 4) {
           setShowAlert(true);
+          setTimeout(() => setShowAlert(false), 5000);
         }
       }, 1500);
-
     } else {
-      // Normal transaction
       const txn = generateNormalTransaction();
       setTransactions(prev => [txn, ...prev].slice(0, 50));
+      setThreatNodes(prev => [...prev, { id: Date.now(), suspicious: false }].slice(-20));
+      setStats(prev => ({
+        ...prev,
+        cleared: prev.cleared + 1,
+        totalProcessed: prev.totalProcessed + 1
+      }));
 
-      // Add normal node
-      setThreatNodes(prev => [...prev, { id: Date.now(), suspicious: false }].slice(-10));
-
-      // Slowly decrease risk if no suspicious activity
       if (suspiciousCountRef.current === 0 && riskScore > 10) {
-        setRiskScore(prev => Math.max(10, prev - 2));
+        setRiskScore(prev => Math.max(10, prev - 1));
       }
     }
-  }, [riskScore, showAlert, addLog]);
+  }, [isLive, riskScore, simulationSpeed, addLog]);
+
+  const handleTransactionsImport = useCallback((importedTransactions) => {
+    setTransactions(prev => [
+      ...importedTransactions.map(t => ({
+        ...t,
+        id: Date.now() + Math.random(),
+        time: t.time || generateTime(),
+        status: 'ANALYZING'
+      })),
+      ...prev
+    ].slice(0, 100));
+
+    setStats(prev => ({
+      ...prev,
+      totalProcessed: prev.totalProcessed + importedTransactions.length,
+      cleared: prev.cleared + Math.floor(importedTransactions.length * 0.9)
+    }));
+
+    addLog({
+      type: 'system',
+      message: `Imported ${importedTransactions.length} transactions successfully`
+    });
+  }, [addLog]);
 
   // Main simulation loop
   useEffect(() => {
     if (!isLive) return;
 
-    // Initialize with first log
-    if (logs.length === 0) {
-      addLog(agentScript[0]);
-      addLog(agentScript[1]);
-      addLog(agentScript[2]);
-      scriptIndexRef.current = 3;
-    }
-
     const interval = setInterval(() => {
       processTransaction();
-    }, 1500);
+    }, 1500 / simulationSpeed);
 
     return () => clearInterval(interval);
-  }, [isLive, processTransaction, addLog, logs.length]);
+  }, [isLive, processTransaction, simulationSpeed]);
+
+  // Initialize logs
+  useEffect(() => {
+    if (logs.length < 3) {
+      agentScript.slice(0, 3).forEach((log, i) => {
+        setTimeout(() => addLog(log), i * 500);
+      });
+    }
+  }, []);
 
   return (
-    <div className="min-h-screen bg-dark-primary text-white overflow-hidden">
+    <div className="app-shell text-white overflow-x-hidden">
       {/* Background glow effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-neon-cyan/5 rounded-full blur-3xl" />
@@ -165,31 +220,24 @@ export default function App() {
       </div>
 
       {/* Header */}
-      <header className="relative backdrop-blur-md bg-dark-secondary/50 border-b border-slate-700/30 sticky top-0 z-50">
-        <div className="flex items-center justify-between px-6 py-4">
+      <header className="topbar">
+        <div className="page-wrap flex items-center justify-between px-2 py-4">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-4"
           >
             <motion.div
-              animate={{
-                boxShadow: [
-                  '0 0 20px rgba(0, 245, 255, 0.3)',
-                  '0 0 40px rgba(0, 245, 255, 0.5)',
-                  '0 0 20px rgba(0, 245, 255, 0.3)'
-                ]
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
+              whileHover={{ scale: 1.03 }}
               className="p-3 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30 backdrop-blur-sm"
             >
               <Shield className="w-6 h-6 text-neon-cyan" />
             </motion.div>
-            <div>
+            <div className="space-y-1">
               <h1 className="text-3xl font-black tracking-tight">
                 <span className="text-gradient">FlowGuard AI</span>
               </h1>
-              <p className="text-xs uppercase letter-spacing-widest text-slate-500 mt-1">
+              <p className="panel-title">
                 Enterprise Anti-Money Laundering Detection System
               </p>
             </div>
@@ -199,18 +247,31 @@ export default function App() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-6"
+            className="flex items-center gap-3 sm:gap-4"
           >
+            {/* Quick Stats */}
+            <div className="hidden xl:flex items-center gap-4 px-4 py-2 rounded-lg glass text-xs">
+              <div className="flex flex-col gap-1">
+                <span className="text-slate-500">Processed</span>
+                <span className="font-bold text-neon-cyan">{stats.totalProcessed}</span>
+              </div>
+              <div className="w-px h-8 bg-slate-700/30" />
+              <div className="flex flex-col gap-1">
+                <span className="text-slate-500">Flagged</span>
+                <span className="font-bold text-threat-critical">{stats.flagged}</span>
+              </div>
+            </div>
+
             {/* Gateway Status */}
-            <div className="flex items-center gap-3 px-4 py-2 rounded-lg glass">
-              <motion.div 
-                animate={{ scale: isLive ? [1, 1.2, 1] : 1 }}
-                transition={{ duration: 1, repeat: Infinity }}
+            <div className="hidden lg:flex items-center gap-3 px-4 py-2 rounded-lg glass">
+              <motion.div
+                animate={{ opacity: isLive ? [0.65, 1, 0.65] : 0.35 }}
+                transition={{ duration: 1.4, repeat: Infinity }}
               >
                 <Wifi className={`w-5 h-5 ${isLive ? 'text-acid-green' : 'text-slate-500'}`} />
               </motion.div>
               <div>
-                <p className="text-xs uppercase letter-spacing-widest text-slate-400">Gateway</p>
+                <p className="text-xs uppercase tracking-wider text-slate-400">Gateway</p>
                 <p className={`text-sm font-bold ${isLive ? 'text-acid-green' : 'text-slate-500'}`}>
                   {isLive ? 'ACTIVE' : 'STANDBY'}
                 </p>
@@ -222,7 +283,7 @@ export default function App() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsLive(!isLive)}
-              className={`flex items-center gap-2.5 px-6 py-2.5 rounded-lg font-bold text-sm tracking-wide transition-all
+              className={`hidden sm:flex items-center gap-2.5 px-6 py-2.5 rounded-lg font-bold text-sm tracking-wide transition-all
                 backdrop-blur-sm border
                 ${isLive
                   ? 'bg-threat-critical/20 border-threat-critical/50 text-threat-critical hover:bg-threat-critical/30 hover:shadow-glow-pink'
@@ -243,77 +304,327 @@ export default function App() {
             </motion.button>
 
             {/* Status Badge */}
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg glass">
-              <motion.div
-                animate={{ scale: isLive ? [1, 1.1, 1] : 0 }}
-                transition={{ duration: 0.8, repeat: Infinity }}
-                className={`w-2.5 h-2.5 rounded-full ${isLive ? 'bg-acid-green shadow-glow-green' : 'bg-slate-600'}`}
-              />
-              <span className={`text-sm font-bold tracking-wide ${isLive ? 'text-acid-green' : 'text-slate-500'}`}>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg glass">
+              <span className={`status-dot ${!isLive ? 'bg-slate-600 shadow-none' : ''}`} />
+              <span className={`text-xs font-bold tracking-wide ${isLive ? 'text-acid-green' : 'text-slate-500'}`}>
                 {isLive ? 'LIVE' : 'PAUSED'}
               </span>
             </div>
+
+            {/* Settings Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2.5 rounded-lg glass border border-slate-700/30 hover:border-neon-cyan/30 transition-colors"
+            >
+              <Settings className="w-5 h-5 text-neon-cyan" />
+            </motion.button>
           </motion.div>
         </div>
+
+        {/* Settings Panel */}
+        <AnimatePresence>
+          {showSettings && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="border-t border-slate-700/30 bg-dark-secondary/30"
+            >
+              <div className="page-wrap flex items-center gap-8 px-2 py-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-slate-400">Simulation Speed</span>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="3"
+                    step="0.5"
+                    value={simulationSpeed}
+                    onChange={(e) => setSimulationSpeed(parseFloat(e.target.value))}
+                    className="w-32 h-2 bg-slate-700/50 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-sm font-bold text-neon-cyan w-12">{simulationSpeed}x</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
+      {/* Tab Navigation */}
+      <div className="relative border-b border-slate-700/30 bg-dark-secondary/20">
+        <div className="page-wrap px-2 py-3">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          {[
+            { id: 'overview', label: 'Overview', icon: Shield },
+            { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+            { id: 'compliance', label: 'Compliance', icon: FileText },
+            { id: 'alerts', label: 'Live Alerts', icon: Zap },
+            { id: 'cases', label: 'Case Mgmt', icon: Grid3x3 },
+            { id: 'rules', label: 'Rules', icon: Activity },
+            { id: 'advanced', label: 'Advanced', icon: Brain },
+            { id: 'upload', label: 'Upload Data', icon: Upload }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <motion.button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`tab-pill whitespace-nowrap ${activeTab === tab.id ? 'tab-pill-active' : ''}`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="font-bold text-sm">{tab.label}</span>
+              </motion.button>
+            );
+          })}
+          </div>
+        </div>
+      </div>
+
       {/* Main Dashboard Grid */}
-      <div className="relative px-6 py-6 grid grid-cols-12 gap-6 h-[calc(100vh-120px)] overflow-hidden">
-        {/* Left Panel - Data Firehose (30%) */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="col-span-3 card-elevated"
-        >
-          <DataFirehose transactions={transactions} />
-        </motion.div>
+      <div className="page-wrap relative px-2 pt-6 pb-12">
+        <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 xl:grid-cols-12 gap-8"
+            >
+              {/* Left Panel - Data Firehose (30%) */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="xl:col-span-1 card-elevated panel-shell firehose-compact"
+              >
+                <div className="panel-head">
+                  <span className="panel-label">Live Transactions</span>
+                </div>
+                <div className="panel-content">
+                  <DataFirehose transactions={transactions} />
+                </div>
+              </motion.div>
 
-        {/* Center Panel - Threat Matrix (40%) */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="col-span-6 card-elevated"
-        >
-          <ThreatMatrix
-            riskScore={riskScore}
-            suspiciousCount={suspiciousCount}
-            showAlert={showAlert}
-            threatNodes={threatNodes}
-          />
-        </motion.div>
+              {/* Center Panel - Threat Matrix (40%) */}
+              <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="xl:col-span-7 card-elevated panel-shell"
+              >
+                <div className="panel-head">
+                  <span className="panel-label">Threat Intelligence</span>
+                  <span className="metric-chip">Suspicious {suspiciousCount}</span>
+                </div>
+                <div className="panel-content">
+                  <ThreatMatrix
+                    riskScore={riskScore}
+                    suspiciousCount={suspiciousCount}
+                    showAlert={showAlert}
+                    threatNodes={threatNodes}
+                  />
+                </div>
+              </motion.div>
 
-        {/* Right Panel - Execution Log (30%) */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="col-span-3 card-elevated"
-        >
-          <ExecutionLog logs={logs} isPaused={!isLive} />
-        </motion.div>
+              {/* Right Panel - Execution Log (30%) */}
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="xl:col-span-4 card-elevated panel-shell"
+              >
+                <div className="panel-head">
+                  <span className="panel-label">Execution Timeline</span>
+                </div>
+                <div className="panel-content">
+                  <ExecutionLog logs={logs} isPaused={!isLive} />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <motion.div
+              key="analytics"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <AnalyticsDashboard stats={stats} riskScore={riskScore} transactions={transactions} />
+            </motion.div>
+          )}
+
+          {activeTab === 'compliance' && (
+            <motion.div
+              key="compliance"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <ComplianceReporting stats={stats} transactions={transactions} suspiciousCount={suspiciousCount} />
+            </motion.div>
+          )}
+
+          {activeTab === 'upload' && (
+            <motion.div
+              key="upload"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <UploadPanel onTransactionsImport={handleTransactionsImport} />
+            </motion.div>
+          )}
+
+          {activeTab === 'alerts' && (
+            <motion.div
+              key="alerts"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <RealTimeAlerts />
+            </motion.div>
+          )}
+
+          {activeTab === 'cases' && (
+            <motion.div
+              key="cases"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <CaseManagement />
+            </motion.div>
+          )}
+
+          {activeTab === 'rules' && (
+            <motion.div
+              key="rules"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 xl:grid-cols-12 gap-8"
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="xl:col-span-6 card-elevated panel-shell"
+              >
+                <div className="panel-head">
+                  <span className="panel-label">Detection Rules</span>
+                </div>
+                <div className="panel-content">
+                  <RulesEngine />
+                </div>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="xl:col-span-6 card-elevated panel-shell"
+              >
+                <div className="panel-head">
+                  <span className="panel-label">Model Regression Insights</span>
+                </div>
+                <div className="panel-content">
+                  <RegressionAnalysis />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {activeTab === 'advanced' && (
+            <motion.div
+              key="advanced"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 xl:grid-cols-12 gap-8"
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="xl:col-span-3 card-elevated panel-shell"
+              >
+                <div className="panel-head">
+                  <span className="panel-label">System Metrics</span>
+                </div>
+                <div className="panel-content">
+                  <AdvancedMetrics />
+                </div>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="xl:col-span-4 card-elevated panel-shell"
+              >
+                <div className="panel-head">
+                  <span className="panel-label">Entity Network</span>
+                </div>
+                <div className="panel-content">
+                  <NetworkGraph />
+                </div>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="xl:col-span-2 card-elevated panel-shell"
+              >
+                <div className="panel-head">
+                  <span className="panel-label">Service Health</span>
+                </div>
+                <div className="panel-content">
+                  <SystemHealth />
+                </div>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="xl:col-span-3 card-elevated panel-shell"
+              >
+                <div className="panel-head">
+                  <span className="panel-label">ML Models</span>
+                </div>
+                <div className="panel-content">
+                  <MLModelsMonitor />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Footer Status Bar */}
-      <footer className="fixed bottom-0 left-0 right-0 backdrop-blur-md bg-dark-secondary/50 border-t border-slate-700/30">
-        <div className="flex items-center justify-between px-6 py-3 text-xs">
+      <footer className="relative backdrop-blur-md bg-dark-secondary/65 border-t border-slate-700/30 mt-8">
+        <div className="page-wrap hidden md:flex items-center justify-between px-2 py-3 text-xs">
           <motion.div 
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
             className="flex items-center gap-2 text-slate-400"
           >
             <div className="w-2 h-2 rounded-full bg-neon-cyan" />
-            <span>Region: Mumbai (ap-south-1) | Latency: 12ms</span>
+            <span>Region: Mumbai (ap-south-1) | Latency: 12ms | Database: Live</span>
           </motion.div>
           
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-2 text-slate-400">
-              <div className={`w-2 h-2 rounded-full ${isLive ? 'bg-acid-green animate-pulse' : 'bg-slate-500'}`} />
-              {isLive ? 'Active Monitoring' : 'Inspection Mode'}
+          <div className="flex items-center gap-6 text-slate-500">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-3 h-3 text-acid-green" />
+              Accuracy: {stats.accuracy}%
             </span>
-            <span className="text-slate-500">Last SAR: {showAlert ? 'Generating...' : 'None pending'}</span>
-            <span className="text-slate-500">v2.7.0 | © 2026 Union Bank of India</span>
+            <span>v2.7.1 | © 2026 Union Bank of India</span>
           </div>
         </div>
       </footer>

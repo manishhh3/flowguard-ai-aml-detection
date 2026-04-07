@@ -7,40 +7,40 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Neon palette
+        // Primary palette (professional)
         'neon': {
-          'cyan': '#00f5ff',
-          'cyan-dark': '#00d4ff',
-          'cyan-light': '#33ffff',
-          'green': '#39ff14',
-          'green-dark': '#2dd60d',
-          'purple': '#d946ef',
-          'pink': '#ff006e',
+          'cyan': '#0ea5b7',
+          'cyan-dark': '#0b7f8c',
+          'cyan-light': '#67e8f9',
+          'green': '#16a34a',
+          'green-dark': '#15803d',
+          'purple': '#7c3aed',
+          'pink': '#be123c',
         },
         
         // Threat levels
         'threat': {
-          'critical': '#ff2d55',
-          'high': '#ff5722',
-          'medium': '#ffb800',
-          'low': '#39ff14',
+          'critical': '#dc2626',
+          'high': '#f59e0b',
+          'medium': '#fbbf24',
+          'low': '#16a34a',
         },
         
         // Status colors
         'status': {
-          'active': '#00f5ff',
-          'success': '#39ff14',
-          'warning': '#ffb800',
-          'error': '#ff2d55',
-          'processing': '#d946ef',
+          'active': '#0ea5b7',
+          'success': '#16a34a',
+          'warning': '#f59e0b',
+          'error': '#dc2626',
+          'processing': '#7c3aed',
         },
         
         // Background palette
         'dark': {
-          'primary': '#020617',
-          'secondary': '#0f172a',
-          'tertiary': '#1e293b',
-          'accent': '#334155',
+          'primary': '#0b1220',
+          'secondary': '#121a2b',
+          'tertiary': '#1b263b',
+          'accent': '#2a3a55',
         },
         
         // Slate scale
@@ -48,19 +48,19 @@ export default {
       },
       
       backgroundColor: {
-        'glass': 'rgba(15, 23, 42, 0.5)',
-        'glass-dark': 'rgba(2, 6, 23, 0.7)',
+        'glass': 'rgba(17, 25, 40, 0.62)',
+        'glass-dark': 'rgba(9, 14, 26, 0.78)',
       },
       
       borderColor: {
-        'glass': 'rgba(51, 65, 85, 0.3)',
+        'glass': 'rgba(111, 134, 168, 0.28)',
       },
       
       boxShadow: {
-        'glow-cyan': '0 0 20px rgba(0, 245, 255, 0.3), inset 0 0 20px rgba(0, 245, 255, 0.05)',
-        'glow-green': '0 0 20px rgba(57, 255, 20, 0.3), inset 0 0 20px rgba(57, 255, 20, 0.05)',
-        'glow-pink': '0 0 20px rgba(255, 45, 85, 0.3), inset 0 0 20px rgba(255, 45, 85, 0.05)',
-        'glow-amber': '0 0 20px rgba(255, 184, 0, 0.3), inset 0 0 20px rgba(255, 184, 0, 0.05)',
+        'glow-cyan': '0 0 18px rgba(14, 165, 183, 0.22), inset 0 0 18px rgba(14, 165, 183, 0.04)',
+        'glow-green': '0 0 18px rgba(22, 163, 74, 0.22), inset 0 0 18px rgba(22, 163, 74, 0.04)',
+        'glow-pink': '0 0 18px rgba(220, 38, 38, 0.2), inset 0 0 18px rgba(220, 38, 38, 0.04)',
+        'glow-amber': '0 0 18px rgba(245, 158, 11, 0.2), inset 0 0 18px rgba(245, 158, 11, 0.04)',
         'floating': '0 20px 60px rgba(0, 0, 0, 0.5)',
         'elevated': '0 30px 80px rgba(0, 0, 0, 0.6)',
       },
@@ -148,7 +148,7 @@ export default {
       
       fontFamily: {
         'mono': ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'Consolas', 'monospace'],
-        'sans': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        'sans': ['"Manrope"', '"Segoe UI"', 'Roboto', 'system-ui', 'sans-serif'],
       },
       
       backdropBlur: {
@@ -186,7 +186,7 @@ export default {
           '@apply bg-glass-dark backdrop-blur-md border border-glass rounded-lg': {},
         },
         '.text-gradient': {
-          'background': 'linear-gradient(135deg, #00f5ff, #39ff14)',
+          'background': 'linear-gradient(135deg, #67e8f9, #16a34a)',
           '-webkit-background-clip': 'text',
           '-webkit-text-fill-color': 'transparent',
           'background-clip': 'text',
